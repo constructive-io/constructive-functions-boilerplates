@@ -4,12 +4,17 @@
   "questions": [
     {
       "name": "____name____",
-      "message": "Feature name (directory, pgpm module and schema prefix)",
+      "message": "Feature name (directory and pgpm module)",
+      "required": true
+    },
+    {
+      "name": "____schema____",
+      "message": "Schema its SQL lives in (e.g. billing_public)",
       "required": true
     },
     {
       "name": "____task____",
-      "message": "Task identifier the job is queued under (category:name)",
+      "message": "Task identifier its job is queued under (category:name)",
       "required": true
     },
     {

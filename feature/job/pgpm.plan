@@ -2,5 +2,5 @@
 %project=____name____
 %uri=____name____
 
-schemas/____name_____public/schema 2017-08-11T08:11:51Z constructive <constructive@5b0c196eeb62> # ____name_____public schema
-schemas/____name_____public/grants [schemas/____name_____public/schema] 2017-08-11T08:11:51Z constructive <constructive@5b0c196eeb62> # grants on ____name_____public
+schemas/____schema____/schema 2017-08-11T08:11:51Z constructive <constructive@5b0c196eeb62> # ____schema____ schema
+schemas/____schema____/grants [schemas/____schema____/schema] 2017-08-11T08:11:51Z constructive <constructive@5b0c196eeb62> # grants on ____schema____
