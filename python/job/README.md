@@ -5,6 +5,7 @@ ____description____
 ```
 deploy/ revert/ verify/   the feature's SQL, authored with `pgpm add`
 handlers/                 its function — handlers/____method____.py, served by handlers/server.py
+                          handlers/agent.py — the invocation: identity, and agent.embed/inference
 __tests__/                the lane, end to end: no cluster, no keys, no network
 ```
 

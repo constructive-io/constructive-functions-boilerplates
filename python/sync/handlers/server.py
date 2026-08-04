@@ -6,6 +6,10 @@ and the platform never sees what is behind it.
 
 Prints `LISTENING <port>` once it is up, which is how the local harness (and
 `fun up`) learns the port when it binds an ephemeral one.
+
+A failure is `{ok: false, error: {message, name}}` — the shape the platform
+reads the reason out of. A bare string flattens to `HTTP 500` and the caller
+sees a status with no cause.
 """
 
 import json
@@ -14,13 +18,14 @@ import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from ____method____ import ____method____
+from agent import AgentContext
 
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):  # noqa: N802 - http.server's interface
         method = self.path.strip("/")
         if method != "____method____":
-            return self._json(404, {"ok": False, "error": f"no method {method}"})
+            return self._fail(404, "UnknownMethod", f"no method {method}")
 
         length = int(self.headers.get("content-length") or 0)
         raw = self.rfile.read(length) if length else b"{}"
@@ -29,23 +34,27 @@ class Handler(BaseHTTPRequestHandler):
         except json.JSONDecodeError as err:
             # A malformed body is a caller bug; failing here is what makes the
             # job retryable rather than silently succeeding on nothing.
-            return self._json(400, {"ok": False, "error": f"invalid JSON body: {err}"})
+            return self._fail(400, "InvalidJSON", f"invalid JSON body: {err}")
 
         try:
-            result = ____method____(params, dict(self.headers))
+            # The identity the platform signed this call with, read once here.
+            result = ____method____(params, AgentContext.from_headers(self.headers))
         except Exception as err:  # the platform reads the envelope, not the traceback
             print(f"____method____ failed: {err}", file=sys.stderr, flush=True)
-            return self._json(500, {"ok": False, "error": str(err)})
+            return self._fail(500, type(err).__name__, str(err))
 
         return self._json(200, result)
 
     def do_GET(self):  # noqa: N802 - http.server's interface
         if self.path == "/healthz":
             return self._json(200, {"ok": True})
-        return self._json(404, {"ok": False, "error": "not found"})
+        return self._fail(404, "NotFound", "not found")
 
     def log_message(self, fmt, *args):
         print(f"[____name____] {fmt % args}", file=sys.stderr, flush=True)
+
+    def _fail(self, status, name, message):
+        return self._json(status, {"ok": False, "error": {"message": message, "name": name}})
 
     def _json(self, status, body):
         payload = json.dumps(body).encode()
