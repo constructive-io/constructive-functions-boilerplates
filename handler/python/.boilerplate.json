@@ -1,0 +1,20 @@
+{
+  "type": "module",
+  "requiresWorkspace": false,
+  "questions": [
+    {
+      "name": "____name____",
+      "message": "Function name (used as directory and module identifier)",
+      "required": true
+    },
+    {
+      "name": "____version____",
+      "message": "Initial version",
+      "default": "0.1.0"
+    },
+    {
+      "name": "____description____",
+      "message": "Short description"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "type": "module",
+  "requiresWorkspace": true,
+  "questions": [
+    {
+      "name": "____name____",
+      "message": "Feature name (directory, pgpm module and image)",
+      "required": true
+    },
+    {
+      "name": "____schema____",
+      "message": "Schema its SQL lives in (e.g. billing_public)",
+      "required": true
+    },
+    {
+      "name": "____method____",
+      "message": "Function name (the task is <feature>:<function>)",
+      "required": true
+    },
+    {
+      "name": "____version____",
+      "message": "Initial version",
+      "default": "0.0.1"
+    },
+    {
+      "name": "____description____",
+      "message": "Short description"
+    }
+  ]
+}
