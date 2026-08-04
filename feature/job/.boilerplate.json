@@ -1,0 +1,25 @@
+{
+  "type": "module",
+  "requiresWorkspace": true,
+  "questions": [
+    {
+      "name": "____name____",
+      "message": "Feature name (directory, pgpm module and schema prefix)",
+      "required": true
+    },
+    {
+      "name": "____task____",
+      "message": "Task identifier the job is queued under (category:name)",
+      "required": true
+    },
+    {
+      "name": "____version____",
+      "message": "Initial version",
+      "default": "0.0.1"
+    },
+    {
+      "name": "____description____",
+      "message": "Short description"
+    }
+  ]
+}

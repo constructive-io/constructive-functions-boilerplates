@@ -1,0 +1,25 @@
+{
+  "name": "@constructive-functions/feature-____name____",
+  "version": "____version____",
+  "description": "____description____",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/constructive-io/constructive-functions"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "jest",
+    "test:watch": "jest --watchAll"
+  },
+  "devDependencies": {
+    "@constructive-functions/harness": "workspace:*",
+    "pgsql-test": "^5.9.7",
+    "pg": "^8.13.1",
+    "@types/pg": "^8.11.10"
+  },
+  "dependencies": {
+    "@constructive-functions/feature-runtime": "workspace:*"
+  }
+}
