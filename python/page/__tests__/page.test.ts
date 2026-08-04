@@ -1,16 +1,19 @@
 import path from 'node:path';
 
+import type {
+  FunctionsTestResult,
+  RunningGateway,
+  RunningImage
+} from '@constructive-functions/test-utils';
 import {
-  defineFunction,
+  getConnections,
+  registerFunction,
   startGateway,
   startProcessImage
-} from '@constructive-functions/feature-runtime';
-import type { RunningGateway, RunningImage } from '@constructive-functions/feature-runtime';
-import { createWorkerPool, getFeatureConnections } from '@constructive-functions/harness';
+} from '@constructive-functions/test-utils';
 import type { Pool } from 'pg';
-import type { GetConnectionResult } from 'pgsql-test';
 
-// The database the functions run for. A deployed platform hosts many; this repo
+// The database the functions run for. A deployed platform hosts many; a feature
 // is one, so the id is a constant rather than something to provision.
 const DATABASE_ID = '00000000-0000-0000-0000-0000000000aa';
 
@@ -19,38 +22,41 @@ const DATABASE_ID = '00000000-0000-0000-0000-0000000000aa';
 const IMAGE = '____name____';
 const TASK = '____name____:____method____';
 
-let conn: GetConnectionResult;
+let conn: FunctionsTestResult;
 let pool: Pool;
 let web: RunningImage;
 let gateway: RunningGateway;
 
 beforeAll(async () => {
-  conn = await getFeatureConnections(path.resolve(__dirname, '..'));
-  pool = createWorkerPool(conn);
+  conn = await getConnections({ featureDir: path.resolve(__dirname, '..') });
+  pool = conn.getPool();
   web = await startProcessImage({
     name: IMAGE,
     command: 'python3',
     args: ['server.py'],
     cwd: path.resolve(__dirname, '..', 'handlers')
   });
-  await defineFunction(pool, DATABASE_ID, { task: TASK, image: IMAGE, channels: ['page'] });
+  await registerFunction(pool, DATABASE_ID, TASK, '', {
+    runtime: 'http',
+    image: IMAGE,
+    accessChannels: ['page']
+  });
   gateway = await startGateway({
     pool,
     databaseId: DATABASE_ID,
     images: [web],
     routes: { '____route____': TASK }
   });
-}, 120_000);
+}, 180_000);
 
 afterAll(async () => {
   await gateway.close();
   await web.close();
-  await pool.end();
   await conn.teardown();
 });
 
 describe('the page lane', () => {
-  it('serves a browser GET through the gateway', async () => {
+  it('serves a browser GET through the gateway, unwrapped', async () => {
     const response = await fetch(`${gateway.url}____route____`);
 
     expect(response.status).toBe(200);

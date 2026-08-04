@@ -14,13 +14,12 @@
     "test:watch": "jest --watchAll"
   },
   "devDependencies": {
-    "@constructive-functions/harness": "workspace:*",
-    "@types/pg": "^8.11.10",
-    "pg": "^8.13.1",
+    "@constructive-functions/test-utils": "workspace:*",
+    "@types/pg": "8.20.0",
+    "pg": "8.20.0",
     "pgsql-test": "^5.9.7"
   },
   "dependencies": {
-    "@constructive-functions/feature-runtime": "workspace:*",
     "@constructive-functions/types": "workspace:*"
   }
 }

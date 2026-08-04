@@ -1,42 +1,45 @@
 import path from 'node:path';
 
+import type {
+  FunctionsTestResult,
+  RunningImage
+} from '@constructive-functions/test-utils';
 import {
-  defineFunction,
-  enqueue,
+  addJob,
+  getConnections,
+  registerFunction,
   runQueuedJobs,
   startFeatureImage
-} from '@constructive-functions/feature-runtime';
-import type { RunningImage } from '@constructive-functions/feature-runtime';
-import { createWorkerPool, getFeatureConnections } from '@constructive-functions/harness';
+} from '@constructive-functions/test-utils';
 import type { Pool } from 'pg';
-import type { GetConnectionResult } from 'pgsql-test';
 
 import { IMAGE, methods, TASK } from '../handlers';
 
-// The database the functions run for. A deployed platform hosts many; this repo
+// The database the functions run for. A deployed platform hosts many; a feature
 // is one, so the id is a constant rather than something to provision.
 const DATABASE_ID = '00000000-0000-0000-0000-0000000000aa';
 
-let conn: GetConnectionResult;
+let conn: FunctionsTestResult;
+// The worker claims jobs and pins a connection per dispatch, so it runs on the
+// harness-owned pool rather than the suite's transaction-bound client.
 let pool: Pool;
 let image: RunningImage;
 
 beforeAll(async () => {
-  conn = await getFeatureConnections(path.resolve(__dirname, '..'));
-  pool = createWorkerPool(conn);
+  conn = await getConnections({ featureDir: path.resolve(__dirname, '..') });
+  pool = conn.getPool();
   image = await startFeatureImage({ name: IMAGE, methods });
-  await defineFunction(pool, DATABASE_ID, { task: TASK, image: IMAGE });
-}, 120_000);
+  await registerFunction(pool, DATABASE_ID, TASK, '', { runtime: 'http', image: IMAGE });
+}, 180_000);
 
 afterAll(async () => {
   await image.close();
-  await pool.end();
   await conn.teardown();
 });
 
 describe('the queue lane', () => {
   it('dispatches a queued job to the image over HTTP', async () => {
-    await enqueue(pool, DATABASE_ID, TASK, {});
+    await addJob(pool, DATABASE_ID, TASK, {}, { entity_type: 'platform' });
 
     const { jobs, log } = await runQueuedJobs({ pool, databaseId: DATABASE_ID, images: [image] });
 

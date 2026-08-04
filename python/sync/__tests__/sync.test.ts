@@ -1,16 +1,19 @@
 import path from 'node:path';
 
+import type {
+  FunctionsTestResult,
+  RunningGateway,
+  RunningImage
+} from '@constructive-functions/test-utils';
 import {
-  defineFunction,
+  getConnections,
+  registerFunction,
   startGateway,
   startProcessImage
-} from '@constructive-functions/feature-runtime';
-import type { RunningGateway, RunningImage } from '@constructive-functions/feature-runtime';
-import { createWorkerPool, getFeatureConnections } from '@constructive-functions/harness';
+} from '@constructive-functions/test-utils';
 import type { Pool } from 'pg';
-import type { GetConnectionResult } from 'pgsql-test';
 
-// The database the functions run for. A deployed platform hosts many; this repo
+// The database the functions run for. A deployed platform hosts many; a feature
 // is one, so the id is a constant rather than something to provision.
 const DATABASE_ID = '00000000-0000-0000-0000-0000000000aa';
 
@@ -19,33 +22,36 @@ const DATABASE_ID = '00000000-0000-0000-0000-0000000000aa';
 const IMAGE = '____name____';
 const TASK = '____name____:____method____';
 
-let conn: GetConnectionResult;
+let conn: FunctionsTestResult;
 let pool: Pool;
 let image: RunningImage;
 let gateway: RunningGateway;
 
 beforeAll(async () => {
-  conn = await getFeatureConnections(path.resolve(__dirname, '..'));
-  pool = createWorkerPool(conn);
+  conn = await getConnections({ featureDir: path.resolve(__dirname, '..') });
+  pool = conn.getPool();
   image = await startProcessImage({
     name: IMAGE,
     command: 'python3',
     args: ['server.py'],
     cwd: path.resolve(__dirname, '..', 'handlers')
   });
-  await defineFunction(pool, DATABASE_ID, { task: TASK, image: IMAGE, channels: ['sync'] });
+  await registerFunction(pool, DATABASE_ID, TASK, '', {
+    runtime: 'http',
+    image: IMAGE,
+    accessChannels: ['sync']
+  });
   gateway = await startGateway({
     pool,
     databaseId: DATABASE_ID,
     images: [image],
     routes: { '____route____': TASK }
   });
-}, 120_000);
+}, 180_000);
 
 afterAll(async () => {
   await gateway.close();
   await image.close();
-  await pool.end();
   await conn.teardown();
 });
 
@@ -58,8 +64,6 @@ describe('the sync lane', () => {
     });
 
     expect(response.status).toBe(200);
-    // The envelope: the result plus the ledger row it was recorded under, which
-    // is what makes the call auditable after the fact.
     expect(await response.json()).toMatchObject({ ok: true, result: { ok: true } });
   });
 });
