@@ -1,10 +1,5 @@
 import type { RequestListener } from 'node:http';
 
-export const TASK = '____name____:____method____';
-
-/** The image serving this feature's pages. */
-export const IMAGE = '____name____';
-
 /**
  * The page lane: a browser hit, not an envelope.
  *

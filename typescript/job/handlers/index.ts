@@ -1,11 +1,13 @@
-import { ____method____, TASK } from './____method____';
+import { ____method____ } from './____method____';
 
-/** The image serving this feature's functions — one container, one route per function. */
-export const IMAGE = '____name____';
-
-export { TASK };
-
-/** What it serves: `POST /<method>`, which is how the platform addresses `____name____:<method>`. */
+/**
+ * What the image serves: `POST /<method>`, which is how the platform addresses
+ * `____name____:<method>`.
+ *
+ * The identity — the task, the image name, the channel, and the capabilities
+ * this feature is allowed to reach — lives in `handler.json`, because the
+ * platform reads it too. This file is behaviour only.
+ */
 export const methods = {
   ____method____
 };

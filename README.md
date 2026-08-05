@@ -55,6 +55,44 @@ time, in file *contents* and file *paths* alike.
 
 Each template declares its own prompts in its `.boilerplate.json`.
 
+## `handler.json` — the one place a feature is described
+
+Every template scaffolds `handlers/handler.json`, and it is the single source of
+truth for everything about the feature that is not behaviour: its task, the
+image serving it, the channel and route the gateway mounts it on, and the
+capabilities it is allowed to reach. `fun deploy` registers from it, and the
+template's own suite registers from it (`registerFeature`), so the deployed
+function and the tested function cannot describe themselves differently.
+
+Handler code is therefore behaviour only — no `TASK`, no `IMAGE`, no channel
+restated in TypeScript next to the same fact in JSON.
+
+```json
+{
+  "name": "billing",
+  "taskIdentifier": "billing:export",
+  "runtime": "http",
+  "accessChannels": ["sync"],
+  "route": "/billing/export",
+  "requiredBuckets": ["exports"],
+  "requiredSecrets": [{ "name": "STRIPE_KEY", "required": true }],
+  "requiredConfigs": [{ "name": "EXPORT_ROW_LIMIT", "required": false }],
+  "requiredModules": ["notifications_module"],
+  "requiredModels": ["gpt-4o"]
+}
+```
+
+**Declaring is how a capability becomes reachable.** The platform resolves the
+declared set per invocation and binds it to the context; `ctx.storage` and
+`ctx.secrets` throw on a key the manifest never declared instead of returning
+`undefined`, so a forgotten declaration fails in the template's own test rather
+than in production. The keys are always logical — `ctx.storage.write('exports', …)`
+resolves to the invoking tenant's bucket, and secret *values* never travel in the
+manifest, the capability bundle, the payload, the logs, or the pod's environment.
+
+The five declaration arrays are scaffolded empty, which is the correct state for
+a feature that reaches for nothing yet.
+
 ## Verifying a template
 
 A template is only correct if the feature it produces installs and passes its

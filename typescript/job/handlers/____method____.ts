@@ -1,7 +1,5 @@
 import type { FunctionHandler } from '@constructive-functions/types';
 
-export const TASK = '____name____:____method____';
-
 export interface Result {
   ok: boolean;
 }

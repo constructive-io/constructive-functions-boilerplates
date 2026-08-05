@@ -2,12 +2,13 @@ import path from 'node:path';
 
 import type {
   FunctionsTestResult,
+  RegisteredFeature,
   RunningImage
 } from '@constructive-functions/test-utils';
 import {
   addJob,
   getConnections,
-  registerFunction,
+  registerFeature,
   runQueuedJobs,
   startProcessImage
 } from '@constructive-functions/test-utils';
@@ -17,25 +18,30 @@ import type { Pool } from 'pg';
 // is one, so the id is a constant rather than something to provision.
 const DATABASE_ID = '00000000-0000-0000-0000-0000000000aa';
 
+const FEATURE_DIR = path.resolve(__dirname, '..');
+
 // The image is a process, so its language stops mattering at this boundary: the
 // platform POSTs to a URL either way.
-const IMAGE = '____name____';
-const TASK = '____name____:____method____';
+const HANDLERS_DIR = path.resolve(FEATURE_DIR, 'handlers');
 
 let conn: FunctionsTestResult;
 let pool: Pool;
 let image: RunningImage;
+let feature: RegisteredFeature;
 
 beforeAll(async () => {
-  conn = await getConnections({ featureDir: path.resolve(__dirname, '..') });
+  conn = await getConnections({ featureDir: FEATURE_DIR });
   pool = conn.getPool();
+  // Registered from handler.json — the same file the platform reads — so the
+  // capabilities this feature declared are the capabilities it is granted here.
+  // Use one it never declared and it fails in this suite, not after deploy.
+  feature = await registerFeature(pool, DATABASE_ID, FEATURE_DIR);
   image = await startProcessImage({
-    name: IMAGE,
+    name: feature.image,
     command: 'python3',
     args: ['server.py'],
-    cwd: path.resolve(__dirname, '..', 'handlers')
+    cwd: HANDLERS_DIR
   });
-  await registerFunction(pool, DATABASE_ID, TASK, '', { runtime: 'http', image: IMAGE });
 }, 180_000);
 
 afterAll(async () => {
@@ -45,13 +51,13 @@ afterAll(async () => {
 
 describe('the queue lane', () => {
   it('dispatches a queued job to the python image over HTTP', async () => {
-    await addJob(pool, DATABASE_ID, TASK, {}, { entity_type: 'platform' });
+    await addJob(pool, DATABASE_ID, feature.task, {}, { entity_type: 'platform' });
 
     const { jobs, log } = await runQueuedJobs({ pool, databaseId: DATABASE_ID, images: [image] });
 
     expect(jobs).toHaveLength(1);
     expect(log.entries).toEqual([
-      expect.objectContaining({ task_identifier: TASK, status: 'completed' })
+      expect.objectContaining({ task_identifier: feature.task, status: 'completed' })
     ]);
   });
 });

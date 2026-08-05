@@ -1,13 +1,18 @@
 {
   "name": "____name____",
   "version": "____version____",
+  "description": "____description____",
   "type": "python",
   "port": 8080,
   "taskIdentifier": "____name____:____method____",
-  "description": "____description____",
-  "payloadSchema": {
-    "type": "object",
-    "properties": {},
-    "additionalProperties": true
-  }
+  "runtime": "http",
+  "accessChannels": [
+    "page"
+  ],
+  "route": "____route____",
+  "requiredBuckets": [],
+  "requiredModules": [],
+  "requiredModels": [],
+  "requiredSecrets": [],
+  "requiredConfigs": []
 }

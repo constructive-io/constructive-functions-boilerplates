@@ -2,12 +2,13 @@ import path from 'node:path';
 
 import type {
   FunctionsTestResult,
+  RegisteredFeature,
   RunningGateway,
   RunningImage
 } from '@constructive-functions/test-utils';
 import {
   getConnections,
-  registerFunction,
+  registerFeature,
   startGateway,
   startProcessImage
 } from '@constructive-functions/test-utils';
@@ -17,35 +18,36 @@ import type { Pool } from 'pg';
 // is one, so the id is a constant rather than something to provision.
 const DATABASE_ID = '00000000-0000-0000-0000-0000000000aa';
 
+const FEATURE_DIR = path.resolve(__dirname, '..');
+
 // The image is a process, so its language stops mattering at this boundary: the
 // platform POSTs to a URL either way.
-const IMAGE = '____name____';
-const TASK = '____name____:____method____';
+const HANDLERS_DIR = path.resolve(FEATURE_DIR, 'handlers');
 
 let conn: FunctionsTestResult;
 let pool: Pool;
 let web: RunningImage;
 let gateway: RunningGateway;
+let feature: RegisteredFeature;
 
 beforeAll(async () => {
-  conn = await getConnections({ featureDir: path.resolve(__dirname, '..') });
+  conn = await getConnections({ featureDir: FEATURE_DIR });
   pool = conn.getPool();
+  // Registered from handler.json — the same file the platform reads — so the
+  // capabilities this feature declared are the capabilities it is granted here.
+  // Use one it never declared and it fails in this suite, not after deploy.
+  feature = await registerFeature(pool, DATABASE_ID, FEATURE_DIR);
   web = await startProcessImage({
-    name: IMAGE,
+    name: feature.image,
     command: 'python3',
     args: ['server.py'],
-    cwd: path.resolve(__dirname, '..', 'handlers')
-  });
-  await registerFunction(pool, DATABASE_ID, TASK, '', {
-    runtime: 'http',
-    image: IMAGE,
-    accessChannels: ['page']
+    cwd: HANDLERS_DIR
   });
   gateway = await startGateway({
     pool,
     databaseId: DATABASE_ID,
     images: [web],
-    routes: { '____route____': TASK }
+    routes: feature.routes
   });
 }, 180_000);
 
@@ -57,7 +59,7 @@ afterAll(async () => {
 
 describe('the page lane', () => {
   it('serves a browser GET through the gateway, unwrapped', async () => {
-    const response = await fetch(`${gateway.url}____route____`);
+    const response = await fetch(`${gateway.url}${feature.route}`);
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('text/html');
