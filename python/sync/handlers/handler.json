@@ -5,6 +5,7 @@
   "type": "python",
   "port": 8080,
   "taskIdentifier": "____name____:____method____",
+  "scope": "platform",
   "runtime": "http",
   "accessChannels": [
     "sync"
