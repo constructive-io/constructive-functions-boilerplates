@@ -8,6 +8,9 @@
   "description": "____description____",
   "requiredSecrets": [],
   "requiredConfigs": [],
+  "requiredBuckets": [],
+  "requiredModules": [],
+  "requiredModels": [],
   "payloadSchema": {
     "type": "object",
     "properties": {},

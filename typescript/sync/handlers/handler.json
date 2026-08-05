@@ -2,7 +2,7 @@
   "name": "____name____",
   "version": "____version____",
   "description": "____description____",
-  "type": "python",
+  "type": "node-graphql",
   "port": 8080,
   "taskIdentifier": "____name____:____method____",
   "runtime": "http",

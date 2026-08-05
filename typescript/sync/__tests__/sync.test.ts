@@ -2,22 +2,25 @@ import path from 'node:path';
 
 import type {
   FunctionsTestResult,
+  RegisteredFeature,
   RunningGateway,
   RunningImage
 } from '@constructive-functions/test-utils';
 import {
   getConnections,
-  registerFunction,
+  registerFeature,
   startFeatureImage,
   startGateway
 } from '@constructive-functions/test-utils';
 import type { Pool } from 'pg';
 
-import { IMAGE, methods, TASK } from '../handlers';
+import { methods } from '../handlers';
 
 // The database the functions run for. A deployed platform hosts many; a feature
 // is one, so the id is a constant rather than something to provision.
 const DATABASE_ID = '00000000-0000-0000-0000-0000000000aa';
+
+const FEATURE_DIR = path.resolve(__dirname, '..');
 
 let conn: FunctionsTestResult;
 // The gateway checks out its own connections, so it runs on the harness-owned
@@ -25,21 +28,21 @@ let conn: FunctionsTestResult;
 let pool: Pool;
 let image: RunningImage;
 let gateway: RunningGateway;
+let feature: RegisteredFeature;
 
 beforeAll(async () => {
-  conn = await getConnections({ featureDir: path.resolve(__dirname, '..') });
+  conn = await getConnections({ featureDir: FEATURE_DIR });
   pool = conn.getPool();
-  image = await startFeatureImage({ name: IMAGE, methods });
-  await registerFunction(pool, DATABASE_ID, TASK, '', {
-    runtime: 'http',
-    image: IMAGE,
-    accessChannels: ['sync']
-  });
+  // Registered from handler.json — the same file the platform reads — so the
+  // capabilities this feature declared are the capabilities it is granted here.
+  // Use one it never declared and it fails in this suite, not after deploy.
+  feature = await registerFeature(pool, DATABASE_ID, FEATURE_DIR);
+  image = await startFeatureImage({ name: feature.image, methods });
   gateway = await startGateway({
     pool,
     databaseId: DATABASE_ID,
     images: [image],
-    routes: { '____route____': TASK }
+    routes: feature.routes
   });
 }, 180_000);
 
@@ -51,7 +54,7 @@ afterAll(async () => {
 
 describe('the sync lane', () => {
   it("answers on the caller's own connection", async () => {
-    const response = await fetch(`${gateway.url}____route____`, {
+    const response = await fetch(`${gateway.url}${feature.route}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({})
@@ -65,7 +68,7 @@ describe('the sync lane', () => {
 
   it('ledgers the invocation', () => {
     expect(gateway.invocations.entries()).toEqual([
-      expect.objectContaining({ task_identifier: TASK, status: 'completed' })
+      expect.objectContaining({ task_identifier: feature.task, status: 'completed' })
     ]);
   });
 });
