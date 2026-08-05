@@ -71,6 +71,7 @@ restated in TypeScript next to the same fact in JSON.
 {
   "name": "billing",
   "taskIdentifier": "billing:export",
+  "scope": "platform",
   "runtime": "http",
   "accessChannels": ["sync"],
   "route": "/billing/export",
@@ -92,6 +93,12 @@ manifest, the capability bundle, the payload, the logs, or the pod's environment
 
 The five declaration arrays are scaffolded empty, which is the correct state for
 a feature that reaches for nothing yet.
+
+**`scope` is stated, never inferred.** It decides which definitions plane owns
+the function and whether `database_id` keys the row, so registration refuses to
+guess: a manifest without it fails rather than landing in whichever plane a
+default happened to name. Templates scaffold `"scope": "platform"`; a feature
+that belongs to a tenant's own plane changes it to `"database"`.
 
 ## Verifying a template
 
