@@ -1,21 +1,26 @@
 {
   "type": "module",
-  "requiresWorkspace": false,
+  "requiresWorkspace": true,
   "questions": [
     {
       "name": "____name____",
-      "message": "Handler name (directory, image and the task's category)",
+      "message": "Feature name (directory, pgpm module, image and the task's category)",
+      "required": true
+    },
+    {
+      "name": "____schema____",
+      "message": "Schema its SQL lives in (e.g. billing_public)",
       "required": true
     },
     {
       "name": "____method____",
-      "message": "Function name (the task is <handler>:<function>)",
+      "message": "Function name (the task is <feature>:<function>)",
       "required": true
     },
     {
       "name": "____version____",
       "message": "Initial version",
-      "default": "0.1.0"
+      "default": "0.0.1"
     },
     {
       "name": "____description____",

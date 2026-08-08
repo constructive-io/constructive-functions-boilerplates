@@ -1,0 +1,32 @@
+{
+  "name": "____name____",
+  "version": "____version____",
+  "description": "____description____",
+  "type": "node-multi-method",
+  "port": 8080,
+  "scope": "platform",
+  "image": "fn-____name____",
+  "runtime": "http",
+  "accessChannels": [],
+  "requires": {
+    "buckets": [],
+    "modules": [],
+    "models": [],
+    "secrets": [],
+    "configs": []
+  },
+  "methods": [
+    {
+      "taskIdentifier": "____name____:____method____",
+      "description": "____description____",
+      "icon": "database",
+      "category": "____name____",
+      "inputs": [
+        { "name": "subject", "type": "string", "description": "What the SQL is asked about" }
+      ],
+      "outputs": [
+        { "name": "answer", "type": "string", "description": "What its SQL answered" }
+      ]
+    }
+  ]
+}

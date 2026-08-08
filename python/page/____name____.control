@@ -1,6 +1,0 @@
-# ____name____ extension
-comment = '____description____'
-default_version = '____version____'
-module_pathname = '$libdir/____name____'
-relocatable = false
-superuser = false
