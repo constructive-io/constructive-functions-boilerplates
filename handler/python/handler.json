@@ -3,18 +3,16 @@
   "version": "____version____",
   "type": "python",
   "port": 8080,
-  "taskIdentifier": "custom:____name____",
+  "taskIdentifier": "____name____:____method____",
   "scope": "platform",
   "description": "____description____",
-  "requiredSecrets": [],
-  "requiredConfigs": [],
-  "requiredBuckets": [],
-  "requiredModules": [],
-  "requiredModels": [],
-  "payloadSchema": {
-    "type": "object",
-    "properties": {},
-    "additionalProperties": true
+  "runtime": "http",
+  "requires": {
+    "buckets": [],
+    "modules": [],
+    "models": [],
+    "secrets": [],
+    "configs": []
   },
   "inputs": [
     { "name": "payload", "type": "json", "description": "Incoming job payload" }
@@ -23,6 +21,5 @@
     { "name": "status", "type": "string", "description": "Processing status" }
   ],
   "icon": "terminal",
-  "category": "custom",
-  "dependencies": {}
+  "category": "____name____"
 }
