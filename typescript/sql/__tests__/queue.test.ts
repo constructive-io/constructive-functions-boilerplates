@@ -69,7 +69,7 @@ describe('____name____:____method____ through the platform', () => {
       databaseId,
       TASK,
       { subject: 'a subject' },
-      { entity_type: 'platform', actor_id: ACTOR }
+      { entity_type: 'platform', identity: { actorId: ACTOR } }
     );
 
     const { jobs, log } = await runQueuedJobs({ pool, databaseId, images: [image] });
@@ -81,7 +81,13 @@ describe('____name____:____method____ through the platform', () => {
   });
 
   it('fails the job on a payload its SQL cannot be asked about', async () => {
-    await addJob(pool, databaseId, TASK, {}, { entity_type: 'platform', actor_id: ACTOR });
+    await addJob(
+      pool,
+      databaseId,
+      TASK,
+      {},
+      { entity_type: 'platform', identity: { actorId: ACTOR } }
+    );
 
     await expect(runQueuedJobs({ pool, databaseId, images: [image] })).rejects.toThrow(
       /payload.subject must be a string/
