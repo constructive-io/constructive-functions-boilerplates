@@ -1,0 +1,22 @@
+{
+  "name": "@constructive-functions/feature-____name____",
+  "version": "____version____",
+  "description": "____description____",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/constructive-io/constructive-functions"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "jest",
+    "test:watch": "jest --watchAll"
+  },
+  "dependencies": {
+    "@constructive-functions/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@constructive-functions/test-utils": "workspace:*"
+  }
+}

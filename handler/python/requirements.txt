@@ -1,0 +1,2 @@
+# ____name____'s own pip dependencies, merged into the image's requirements by
+# `fun generate` — the server's own (fastapi, uvicorn, …) come from the template.
