@@ -14,9 +14,8 @@ __tests__/                behaviour, plus the manifest end to end
 This is a **gql** feature: it is served over HTTP/GraphQL and **has no database
 connection**. `ctx.db` is not on its context type, so a query is unwritable —
 reach the tenant's data through `ctx.client` (its GraphQL API), which applies the
-caller's own permissions. A feature that owns tables, functions or triggers is a
-**sql** feature (`fun init <name> --surface sql`), which carries a pgpm module and
-a db-connected context.
+caller's own permissions. A feature that reads the tenant's database directly is a
+**sql** feature (`fun init <name> --surface sql`), whose context has `ctx.db`.
 
 The image serves `POST /____method____` — the method route the platform addresses
 `____name____:____method____` through. A second function is a second entry in

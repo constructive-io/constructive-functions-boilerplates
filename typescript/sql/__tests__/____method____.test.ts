@@ -1,56 +1,53 @@
 import path from 'node:path';
 
-import { asRole, getConnections } from '@constructive-functions/test-utils';
-import type { PgTestClient } from 'pgsql-test';
+import type { FunctionsTestResult } from '@constructive-functions/test-utils';
+import {
+  createFunctionContext,
+  getConnections,
+  resolveDatabaseId
+} from '@constructive-functions/test-utils';
+
+import { ____method____ } from '../handlers/____method____';
 
 /**
- * The SQL this feature owns, tested as SQL: its pgpm module is deployed on top
- * of the platform surface into an isolated database, and each test runs inside a
- * savepoint. `queue.test.ts` is what proves the handler reaches it through
- * `ctx.db`.
+ * The behaviour test: the function called directly, on the context the runtime
+ * would have built. `ctx.db` is the one surface never emulated — emulating a
+ * transaction would emulate away the RLS it exists to enforce — so this suite
+ * owns a database and the context finds its pool.
  *
- * The tests run as the role an invocation really assumes rather than as the
- * owner, so the grants this module ships are part of what is under test: SQL
- * that passes as its owner and is unreachable at runtime is the failure this
- * catches.
+ * The identity is the fixture: a job carrying an actor runs as `authenticated`
+ * and one without runs as `anonymous`, and which grants apply follows from that.
+ * `queue.test.ts` is the one that proves the manifest.
  */
 const ACTOR = '00000000-0000-0000-0000-0000000000a1';
 
-let db: PgTestClient;
-let teardown: () => Promise<void>;
+let conn: FunctionsTestResult;
+let databaseId: string;
 
 beforeAll(async () => {
-  ({ db, teardown } = await getConnections({ featureDir: path.resolve(__dirname, '..') }));
+  conn = await getConnections({ featureDir: path.resolve(__dirname, '..') });
+  databaseId = await resolveDatabaseId(conn.getPool());
 }, 120_000);
 
 afterAll(async () => {
-  await teardown();
+  await conn.teardown();
 });
 
-beforeEach(async () => {
-  await db.beforeEach();
-});
+describe('____name____:____method____', () => {
+  it('reads for the tenant it was invoked for, as the actor', async () => {
+    const ctx = createFunctionContext({ job: { databaseId, actorId: ACTOR } });
 
-afterEach(async () => {
-  await db.afterEach();
-});
-
-describe('____schema____.____method____', () => {
-  it('answers about its subject', async () => {
-    await asRole(db, 'authenticated', { user_id: ACTOR }, async () => {
-      const { answer } = await db.one('SELECT ____schema____.____method____($1) AS answer', [
-        'a subject'
-      ]);
-
-      expect(answer).toBe('____name____:____method____ answered for a subject');
+    await expect(____method____({ subject: 'a subject' }, ctx)).resolves.toEqual({
+      answer: `a subject read for ${databaseId}`,
+      role: 'authenticated'
     });
   });
 
-  it('falls back when the subject is blank', async () => {
-    await asRole(db, 'authenticated', { user_id: ACTOR }, async () => {
-      const { answer } = await db.one('SELECT ____schema____.____method____($1) AS answer', ['  ']);
+  it('runs as anonymous when no actor invoked it', async () => {
+    const ctx = createFunctionContext({ job: { databaseId } });
 
-      expect(answer).toBe('____name____:____method____ answered for nobody');
-    });
+    const { role } = await ____method____({ subject: 'a subject' }, ctx);
+
+    expect(role).toBe('anonymous');
   });
 });

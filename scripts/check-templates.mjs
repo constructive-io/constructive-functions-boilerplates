@@ -98,6 +98,21 @@ for (const dir of FEATURE_TEMPLATES) {
   }
   checkMethods(rel, manifest);
 
+  // A feature owns no schema, so a template may not scaffold a pgpm module.
+  // Whatever `fun init` writes, an author copies — and eight features inventing
+  // eight `documents` tables is eight schemas nothing in production has.
+  for (const owned of ['pgpm.plan', 'Makefile', 'deploy', 'revert', 'verify']) {
+    if (fs.existsSync(path.join(root, dir, owned))) {
+      problems.push(
+        `${dir}/${owned}: a feature owns no schema — statements yes, shape no. ` +
+          'Everything a feature reads exists because the platform or a seed put it there'
+      );
+    }
+  }
+  if (fs.readdirSync(path.join(root, dir)).some((entry) => entry.endsWith('.control'))) {
+    problems.push(`${dir}: a .control file makes this feature a pgpm module, which it may not be`);
+  }
+
   // The index re-exports and names the image, so it can disagree with the
   // manifest — which is exactly how the last drift survived review.
   const index = path.join(root, dir, 'handlers', 'index.ts');

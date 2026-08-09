@@ -15,6 +15,8 @@ export interface Params {
 
 export interface Result {
   answer: string;
+  /** The role the invocation's transaction assumed — the tenant's, not the pod's. */
+  role: string;
 }
 
 /**
@@ -27,20 +29,26 @@ export interface Result {
  * worker's own privileged, RLS-exempt connection, and a handler that opened one
  * would be reading every tenant's rows.
  *
- * The SQL itself belongs to this feature's pgpm module (`deploy/`), so the query
- * here is a call into it rather than statements assembled in TypeScript.
+ * The query below reads what that transaction *is*, because it is the one thing
+ * true of every database this feature might run against: the role follows the
+ * invocation's actor (`authenticated` with one, `anonymous` without), and the
+ * claims name the tenant. Replace it with your own statements against the rows a
+ * seed put there — the tables belong to the platform and the seeds, never to a
+ * feature.
  */
 export const ____method____: FunctionHandler<Params, Result> = async (params, ctx) => {
   return ctx.db(async (db) => {
-    const { rows } = await db.query('SELECT ____schema____.____method____($1) AS answer', [
-      params.subject
-    ]);
-    const answer = rows[0]?.answer;
-    if (typeof answer !== 'string') {
+    const { rows } = await db.query(
+      "SELECT current_user AS role, current_setting('jwt.claims.database_id', true) AS database_id"
+    );
+    const { role, database_id: databaseId } = rows[0] ?? {};
+    if (typeof role !== 'string' || typeof databaseId !== 'string') {
+      // The transaction always assumes a role and always stamps the claim, so
+      // reading neither means this ran somewhere it should not have.
       throw new Error(
-        `____name____:____method____: ____schema____.____method____ returned ${typeof answer}`
+        `____name____:____method____: read role=${String(role)} database=${String(databaseId)}`
       );
     }
-    return { answer };
+    return { answer: `${params.subject} read for ${databaseId}`, role };
   });
 };

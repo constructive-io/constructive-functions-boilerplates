@@ -15,7 +15,7 @@ import { IMAGE, methods, TASK } from '../handlers';
 /**
  * The platform test: this feature registered from the very file the platform
  * reads (`handlers/handler.json`), served by the real function server, invoked
- * through the real queue, reaching its own SQL through `ctx.db`.
+ * through the real queue, reaching the tenant's database through `ctx.db`.
  *
  * It is what makes `handler.json` authoritative rather than decorative — a
  * capability the manifest forgot to declare fails here, before deploy, and a task
@@ -65,7 +65,7 @@ afterAll(async () => {
 });
 
 describe('____name____:____method____ through the platform', () => {
-  it('runs the job the platform enqueues, against its own SQL', async () => {
+  it('runs the job the platform enqueues, against the tenant it names', async () => {
     await addJob(
       pool,
       databaseId,

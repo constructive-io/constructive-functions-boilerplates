@@ -7,7 +7,8 @@ import type { FunctionContext } from '@constructive-functions/types';
  * and its declared buckets, secrets and models through the rest of the context —
  * never Postgres directly. Narrowing the context makes that structural rather
  * than advisory: `ctx.db` is not on the type, so a query is unwritable. A
- * feature that genuinely owns SQL is scaffolded with `--surface sql` instead.
+ * feature that reads the tenant's database directly is scaffolded with
+ * `--surface sql` instead.
  */
 export type GqlContext = Omit<FunctionContext, 'db'>;
 
