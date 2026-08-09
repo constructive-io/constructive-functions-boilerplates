@@ -8,19 +8,23 @@ import { ____method____ } from '../handlers/____method____';
  * where the logic belongs. `queue.test.ts` is the one that proves the manifest.
  */
 describe('____name____:____method____', () => {
-  it('answers a payload', async () => {
-    const ctx = createFunctionContext();
+  // Every invocation runs *for* a tenant, so the emulated context is built with
+  // the identity the runtime would have refused the request without.
+  const job = { databaseId: '00000000-0000-4000-8000-0000000000ff' };
 
-    await expect(____method____({}, ctx)).resolves.toEqual({ ok: true });
+  it('answers a payload', async () => {
+    const ctx = createFunctionContext({ job });
+
+    await expect(____method____({ subject: 'a subject' }, ctx)).resolves.toEqual({ ok: true });
   });
 
   it('reports what it did on the context logger', async () => {
-    const ctx = createFunctionContext();
+    const ctx = createFunctionContext({ job });
 
-    await ____method____({ id: '1' }, ctx);
+    await ____method____({ subject: 'a subject' }, ctx);
 
     expect(ctx.logs).toEqual([
-      { level: 'info', args: ['____name____:____method____', { keys: ['id'] }] }
+      { level: 'info', args: ['____name____:____method____', { subject: 'a subject' }] }
     ]);
   });
 });

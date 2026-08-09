@@ -78,12 +78,18 @@ from it and the template's own suite registers from the same file
 (`registerFeature`), so the deployed function and the tested function cannot
 describe themselves differently.
 
+A feature's `image` is its own path, `features/<name>`: that is what
+constructive-functions publishes, as
+`ghcr.io/constructive-io/features/<name>`, so a manifest naming anything else
+names an image nothing builds. (A platform handler in constructive-db keeps the
+`fn-<name>` form it has always had.)
+
 ```json
 {
   "name": "billing",
   "type": "node-multi-method",
   "scope": "platform",
-  "image": "fn-billing",
+  "image": "features/billing",
   "runtime": "http",
   "accessChannels": ["sync"],
   "route": "/billing/export",

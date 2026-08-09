@@ -1,9 +1,7 @@
-import type { FunctionHandler } from '@constructive-functions/types';
-
 import { ____method____ } from './____method____';
 
 /** The image serving this feature's functions. */
-export const IMAGE = 'fn-____name____';
+export const IMAGE = 'features/____name____';
 
 /** What a caller enqueues or the gateway routes to. */
 export const TASK = '____name____:____method____';
@@ -13,10 +11,11 @@ export const TASK = '____name____:____method____';
  * addresses `____name____:<method>`. A second function is a second entry here
  * and a second `methods[]` entry in `handler.json` — nothing else.
  *
+ * Left to infer its own type: a handler's params are the inputs it declared, and
+ * annotating this map as one common payload type would erase exactly that.
+ *
  * The identity — the task, the image, the channel it answers on, and everything
  * this feature is allowed to reach — lives in `handler.json`, because the
  * platform reads that file too. This one is behaviour only.
  */
-export const methods: Record<string, FunctionHandler<Record<string, unknown>>> = {
-  ____method____
-};
+export const methods = { ____method____ };

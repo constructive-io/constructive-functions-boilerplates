@@ -1,7 +1,14 @@
 import type { FunctionContext, FunctionHandler } from '@constructive-functions/types';
 
+/**
+ * The inputs `handler.json` declares, as types: `subject` is a required string
+ * there, so it is a `string` here. The runtime compiles the declaration and
+ * refuses a payload that violates it with a 400 before this function is
+ * entered, which is why nothing below checks it — an optional port is
+ * `optional: true` in the manifest, not an `if` in the body.
+ */
 export interface Params {
-  [key: string]: unknown;
+  subject: string;
 }
 
 export interface Result {
@@ -21,14 +28,13 @@ export interface Result {
  * refuses anything `handler.json` does not declare, so declare capabilities as
  * you write the code that uses them.
  *
- * A payload arrives as untyped JSON, so validate it at the boundary and throw on
- * anything else: a malformed payload is the caller's bug, and throwing is how
- * this function reports failure — the platform records it and retries.
+ * Throwing is how this function reports failure — the platform records it and
+ * retries. An `{ ok: false }` of your own invention hides it from both.
  */
 export const ____method____: FunctionHandler<Params, Result> = async (
   params: Params,
   ctx: FunctionContext
 ) => {
-  ctx.log.info('____name____:____method____', { keys: Object.keys(params) });
+  ctx.log.info('____name____:____method____', { subject: params.subject });
   return { ok: true };
 };

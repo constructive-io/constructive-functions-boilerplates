@@ -1,7 +1,16 @@
 import type { FunctionHandler } from '@constructive-functions/types';
 
+/**
+ * The inputs `handler.json` declares, as types.
+ *
+ * `subject` is a required string there, so it is a `string` here: the runtime
+ * compiles the declaration to JSON Schema and refuses a payload that violates
+ * it with a 400 before this function is entered — which is why nothing below
+ * checks for it. An optional port is `optional: true` in the manifest, not an
+ * `if` in the body.
+ */
 export interface Params {
-  subject?: unknown;
+  subject: string;
 }
 
 export interface Result {
@@ -22,16 +31,9 @@ export interface Result {
  * here is a call into it rather than statements assembled in TypeScript.
  */
 export const ____method____: FunctionHandler<Params, Result> = async (params, ctx) => {
-  const { subject } = params;
-  if (typeof subject !== 'string') {
-    throw new Error(
-      `____name____:____method____: payload.subject must be a string, received ${typeof subject}`
-    );
-  }
-
   return ctx.db(async (db) => {
     const { rows } = await db.query('SELECT ____schema____.____method____($1) AS answer', [
-      subject
+      params.subject
     ]);
     const answer = rows[0]?.answer;
     if (typeof answer !== 'string') {

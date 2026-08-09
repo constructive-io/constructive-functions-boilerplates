@@ -5,7 +5,7 @@
   "type": "node-multi-method",
   "port": 8080,
   "scope": "platform",
-  "image": "fn-____name____",
+  "image": "features/____name____",
   "runtime": "http",
   "accessChannels": [],
   "requires": {
