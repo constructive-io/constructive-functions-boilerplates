@@ -61,3 +61,47 @@ pgpm docker start --image docker.io/constructiveio/postgres-plus:18
 eval "$(pgpm env)"
 pnpm --filter "@constructive-functions/feature-____name____" test
 ```
+
+## Next
+
+The test above is the loop: it clones a seeded template database, needs no
+cluster, and is the only thing you need while writing the handler. When you want
+this feature on a real stack, from the root of the checkout it lives in:
+
+```bash
+pnpm fun up --k8s      # brings the platform up and registers every feature here
+```
+
+Registration reads `handlers/handler.json` — the same file the test reads — so a
+manifest-only change needs no rebuild:
+
+```bash
+pnpm fun register --apply     # write the declaration; --dry-run prints the SQL
+```
+
+A registration failure aborts the bring-up rather than being reported as
+skipped, which it once was: an unregistered method has no symptom of its own
+until something calls it and gets
+`No service URL for "____name____:____method____"`.
+
+### If this is a page
+
+A page method is `accessChannels: ["page"]` plus a `route`, and that is the whole
+of it: no framework, no build step, no `pages/` directory — the handler answers
+with the status, headers and body the browser gets.
+
+A feature that serves a *site* rather than one route puts those methods in a
+second manifest nested beside this one, because a page container and a JSON
+container are two images:
+
+```
+handlers/handler.json          the sync/job methods         "type": "node-multi-method"
+handlers/pages/handler.json    the routes a browser lands on "type": "node-page"
+```
+
+The nested manifest declares its own `image`, and the platform generates and
+builds it as one. `features/auth` in constructive-functions is the reference —
+one page image serving four landings, each redirecting with the tenant's session
+cookie. Note that `route` and `accessChannels` are per **method**, not per
+feature: `features/checkout` serves `checkout:session` at `/session` over `sync`
+and `checkout:callback` at `/callback` as a page, from one feature.
