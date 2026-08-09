@@ -4,12 +4,7 @@
   "questions": [
     {
       "name": "____name____",
-      "message": "Feature name (directory, pgpm module, image and the task's category)",
-      "required": true
-    },
-    {
-      "name": "____schema____",
-      "message": "Schema its SQL lives in (e.g. billing_public)",
+      "message": "Feature name (directory, image and the task's category)",
       "required": true
     },
     {

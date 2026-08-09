@@ -28,16 +28,18 @@ feature is TypeScript and `handler/python` is how python code ships.
 | surface | what it reaches | database |
 |---|---|---|
 | `gql` | the tenant's API through `ctx.client`, its buckets, secrets and models | **none** — `ctx.db` is not on the context type |
-| `sql` | the same, plus a transaction through `ctx.db(fn)`, and a pgpm module of its own | yes |
+| `sql` | the same, plus a transaction through `ctx.db(fn)` | yes |
 
 `ctx.db(fn)` runs the callback in one transaction that has assumed a
 low-privilege role and stamped the invocation's identity claims, so the tenant's
 RLS applies to every statement. There is no pool on the context by design: a raw
 pool is the worker's own privileged, RLS-exempt connection. On the `gql` surface
 `db` is removed from the context type outright, so a query is unwritable rather
-than discouraged — and a `gql` feature carries no pgpm module, because a schema
-named after a feature that owns no SQL was only ever ceremony (and it used to be
-granted to `anonymous`).
+than discouraged.
+
+Statements yes, schema no: neither surface owns the *shape* of the database. Every
+table a feature reads exists because the platform or a seed put it there, so a
+feature never ships a migration, a grant, or a table invented for a test.
 
 The **kind** is not a template but a parameter: the same feature, reached a
 different way.
@@ -62,9 +64,8 @@ in file *contents* and file *paths* alike.
 |---|---|
 | `____name____` | the feature: its directory, package, image and the task's category |
 | `____method____` | the function: its route on the image, and `____name____:____method____` as the task |
-| `____schema____` | `sql` only: the schema its SQL lives in, e.g. `billing_public` |
 | `____version____` | initial version |
-| `____description____` | one line, used in `package.json` and the control file |
+| `____description____` | one line, used in `package.json` and the manifest |
 
 Each template declares its own prompts in its `.boilerplate.json`.
 
@@ -78,12 +79,18 @@ from it and the template's own suite registers from the same file
 (`registerFeature`), so the deployed function and the tested function cannot
 describe themselves differently.
 
+A feature's `image` is its own path, `features/<name>`: that is what
+constructive-functions publishes, as
+`ghcr.io/constructive-io/features/<name>`, so a manifest naming anything else
+names an image nothing builds. (A platform handler in constructive-db keeps the
+`fn-<name>` form it has always had.)
+
 ```json
 {
   "name": "billing",
   "type": "node-multi-method",
   "scope": "platform",
-  "image": "fn-billing",
+  "image": "features/billing",
   "runtime": "http",
   "accessChannels": ["sync"],
   "route": "/billing/export",

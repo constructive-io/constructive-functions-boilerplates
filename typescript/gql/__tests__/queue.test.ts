@@ -37,7 +37,10 @@ beforeAll(async () => {
   pool = conn.getPool();
   databaseId = await resolveDatabaseId(pool);
 
-  image = await startFeatureImage({ name: IMAGE, methods });
+  // `featureDir` compiles the inputs declared in this feature's own
+  // `handler.json`, so the payload a deployed image would refuse is refused
+  // here too — which is what makes the declaration the only check there is.
+  image = await startFeatureImage({ name: IMAGE, methods, featureDir });
   await registerFeature(pool, databaseId, featureDir, { image: IMAGE });
 }, 120_000);
 
@@ -55,7 +58,7 @@ afterAll(async () => {
 
 describe('____name____:____method____ through the platform', () => {
   it('runs the job the platform enqueues', async () => {
-    await addJob(pool, databaseId, TASK, {}, { entity_type: 'platform' });
+    await addJob(pool, databaseId, TASK, { subject: 'a subject' }, { entity_type: 'platform' });
 
     const { jobs, log } = await runQueuedJobs({ pool, databaseId, images: [image] });
 
@@ -63,5 +66,15 @@ describe('____name____:____method____ through the platform', () => {
     expect(log.entries).toEqual([
       expect.objectContaining({ task_identifier: TASK, status: 'completed' })
     ]);
+  });
+
+  // The declaration is the check: the handler asks nothing about its payload,
+  // because a payload the manifest does not allow never reaches it.
+  it('refuses a payload the manifest does not allow', async () => {
+    await addJob(pool, databaseId, TASK, {}, { entity_type: 'platform' });
+
+    await expect(runQueuedJobs({ pool, databaseId, images: [image] })).rejects.toThrow(
+      /subject is required/
+    );
   });
 });

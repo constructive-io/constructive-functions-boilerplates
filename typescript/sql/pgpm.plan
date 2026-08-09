@@ -1,7 +1,0 @@
-%syntax-version=1.0.0
-%project=____name____
-%uri=____name____
-
-schemas/____schema____/schema 2017-08-11T08:11:51Z constructive <constructive@5b0c196eeb62> # ____schema____ schema
-schemas/____schema____/procedures/____method____ [schemas/____schema____/schema] 2017-08-11T08:11:51Z constructive <constructive@5b0c196eeb62> # ____schema____.____method____(text)
-schemas/____schema____/grants [schemas/____schema____/procedures/____method____] 2017-08-11T08:11:51Z constructive <constructive@5b0c196eeb62> # grants on ____schema____

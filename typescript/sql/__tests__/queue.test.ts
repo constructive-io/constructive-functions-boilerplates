@@ -15,7 +15,7 @@ import { IMAGE, methods, TASK } from '../handlers';
 /**
  * The platform test: this feature registered from the very file the platform
  * reads (`handlers/handler.json`), served by the real function server, invoked
- * through the real queue, reaching its own SQL through `ctx.db`.
+ * through the real queue, reaching the tenant's database through `ctx.db`.
  *
  * It is what makes `handler.json` authoritative rather than decorative — a
  * capability the manifest forgot to declare fails here, before deploy, and a task
@@ -45,8 +45,10 @@ beforeAll(async () => {
 
   // The image is handed the suite's pool: a deployed container reads its
   // connection from the environment, which here would name the template rather
-  // than the database this test owns.
-  image = await startFeatureImage({ name: IMAGE, methods, pool });
+  // than the database this test owns. `featureDir` compiles the declared inputs
+  // out of this feature's own `handler.json`, so the payload a deployed image
+  // would refuse is refused here too.
+  image = await startFeatureImage({ name: IMAGE, methods, pool, featureDir });
   await registerFeature(pool, databaseId, featureDir, { image: IMAGE });
 }, 120_000);
 
@@ -63,7 +65,7 @@ afterAll(async () => {
 });
 
 describe('____name____:____method____ through the platform', () => {
-  it('runs the job the platform enqueues, against its own SQL', async () => {
+  it('runs the job the platform enqueues, against the tenant it names', async () => {
     await addJob(
       pool,
       databaseId,
@@ -80,7 +82,9 @@ describe('____name____:____method____ through the platform', () => {
     ]);
   });
 
-  it('fails the job on a payload its SQL cannot be asked about', async () => {
+  // The declaration is the check: nothing in the handler asks whether `subject`
+  // is there, because a payload without it never reaches the handler.
+  it('refuses a payload the manifest does not allow', async () => {
     await addJob(
       pool,
       databaseId,
@@ -90,7 +94,7 @@ describe('____name____:____method____ through the platform', () => {
     );
 
     await expect(runQueuedJobs({ pool, databaseId, images: [image] })).rejects.toThrow(
-      /payload.subject must be a string/
+      /subject is required/
     );
   });
 });

@@ -5,7 +5,7 @@
   "type": "node-multi-method",
   "port": 8080,
   "scope": "platform",
-  "image": "fn-____name____",
+  "image": "features/____name____",
   "runtime": "http",
   "accessChannels": [],
   "requires": {
@@ -22,10 +22,11 @@
       "icon": "database",
       "category": "____name____",
       "inputs": [
-        { "name": "subject", "type": "string", "description": "What the SQL is asked about" }
+        { "name": "subject", "type": "string", "description": "What the query is asked about" }
       ],
       "outputs": [
-        { "name": "answer", "type": "string", "description": "What its SQL answered" }
+        { "name": "answer", "type": "string", "description": "What the query answered" },
+        { "name": "role", "type": "string", "description": "The role its transaction assumed" }
       ]
     }
   ]

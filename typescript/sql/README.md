@@ -5,25 +5,26 @@ ____description____
 ```
 handlers/handler.json     what this feature is, and what it may reach
 handlers/                 its functions — handlers/____method____.ts
-deploy/ verify/ revert/   the SQL it owns, as a pgpm module
 package.json              its npm dependencies, like any other node package
-__tests__/                its SQL, and the manifest end to end
+__tests__/                behaviour, plus the manifest end to end
 ```
 
 ## The surface
 
-This is a **sql** feature: it is db-connected, and it owns SQL.
+This is a **sql** feature: it is db-connected.
 
 `ctx.db(fn)` runs the callback in one transaction that has assumed a
 low-privilege role and stamped the invocation's identity claims, so the tenant's
-RLS applies to every statement — it commits on return, rolls back on throw.
-There is no pool on the context by design: a raw pool is the worker's own
-privileged, RLS-exempt connection.
+RLS applies to every statement — it commits on return, rolls back on throw. The
+role follows the actor: `authenticated` for an invocation carrying one,
+`anonymous` for one that does not. There is no pool on the context by design: a
+raw pool is the worker's own privileged, RLS-exempt connection, and a handler
+that opened one would be reading every tenant's rows.
 
-The SQL itself lives in this module's `deploy/` (add changes with `pgpm add`), so
-the handler calls into it rather than assembling statements in TypeScript. A
-feature with no SQL of its own is a **gql** feature (`fun init <name> --surface gql`),
-whose context has no `db` at all.
+Statements yes, schema no. Every table this feature reads exists because the
+platform or a **seed** put it there — a feature that invents one is testing a
+shape nothing in production has. A feature with no database at all is a **gql**
+feature (`fun init <name> --surface gql`), whose context has no `db`.
 
 The image serves `POST /____method____` — the method route the platform addresses
 `____name____:____method____` through. A second function is a second entry in
@@ -59,15 +60,11 @@ resolves to this tenant's bucket per invocation, and `ctx.secrets.get('STRIPE_KE
 reads from this tenant's own store. Secret *values* never travel in the manifest,
 the capability bundle, the payload, the logs, or the pod's environment.
 
+A `modules` entry is how a feature says which provisioned module's tables it
+reads — declared, so a tenant missing it fails at deploy rather than mid-query.
+
 npm dependencies go in `package.json`, where node already keeps them — the image
 build reads that file. `handler.json` carries only what the platform reads.
-
-## Grants
-
-`deploy/schemas/____schema____/grants.sql` grants `authenticated` and nothing
-wider. Usage for `anonymous` publishes this schema to unauthenticated callers,
-which is an exposure decision to make deliberately — add it there when you mean
-it.
 
 ## Running it
 
