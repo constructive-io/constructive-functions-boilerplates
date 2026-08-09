@@ -47,3 +47,25 @@ pgpm docker start --image docker.io/constructiveio/postgres-plus:18
 eval "$(pgpm env)"
 pnpm --filter "@constructive-functions/feature-____name____" test
 ```
+
+## Next
+
+The test above is the loop: it clones a seeded template database, needs no
+cluster, and is the only thing you need while writing the handler.
+
+When you want it on a real stack, from the repository root:
+
+```bash
+pnpm fun up --k8s     # brings the platform up and registers every feature here
+```
+
+Registration reads `handlers/handler.json` — the same file the test reads — so
+a manifest change does not need a redeploy:
+
+```bash
+pnpm fun register --apply    # write the declaration; --dry-run prints the SQL
+```
+
+A registration failure is never swallowed. If `fun register` reports a problem,
+nothing was registered, and calls fail later with `No service URL for "<task>"`.
+Fix it before moving on.
