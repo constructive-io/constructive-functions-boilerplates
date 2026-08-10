@@ -1,0 +1,5 @@
+# This feature's own pip dependencies, one per line, the way pip reads them.
+# The image installs them on top of the runtime's own (httpx, jsonschema,
+# asyncpg, boto3) and the server's (fastapi, uvicorn) — declare only what this
+# handler imports. System and image packages belong to the Dockerfile, and
+# `handler.json` carries only what the platform reads.

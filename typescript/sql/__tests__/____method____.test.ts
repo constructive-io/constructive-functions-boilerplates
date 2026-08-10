@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import type { FunctionsTestResult } from '@constructive-functions/test-utils';
 import {
   createFunctionContext,
@@ -25,7 +23,9 @@ let conn: FunctionsTestResult;
 let databaseId: string;
 
 beforeAll(async () => {
-  conn = await getConnections({ featureDir: path.resolve(__dirname, '..') });
+  // No `featureDir`: that option deploys a feature's own pgpm module, and a
+  // feature owns no schema — this suite's database is the platform's, cloned.
+  conn = await getConnections();
   databaseId = await resolveDatabaseId(conn.getPool());
 }, 120_000);
 

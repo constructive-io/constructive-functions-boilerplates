@@ -7,19 +7,20 @@ import {
   registerFeature,
   resolveDatabaseId,
   runQueuedJobs,
-  startFeatureImage
+  startPythonImage
 } from '@constructive-functions/test-utils';
-
-import { IMAGE, methods, TASK } from '../handlers';
 
 /**
  * The platform test: this feature registered from the very file the platform
- * reads (`handlers/handler.json`), served by the real function server, invoked
+ * reads (`handlers/handler.json`), served by the real python image, invoked
  * through the real queue, reaching the tenant's database through `ctx.db`.
  *
- * It is what makes `handler.json` authoritative rather than decorative — a
- * capability the manifest forgot to declare fails here, before deploy, and a task
- * identifier that disagrees with `<category>:<name>` fails at registration.
+ * A python feature has no `handlers/index.ts` to import — the image discovers
+ * its methods from `handler.py`, so nothing here reaches into the handler's
+ * code. What runs is `main.py` importing `handler.py` through
+ * `constructive_runtime`, with only the container removed; the first time it
+ * runs, the harness builds the image's venv, which is why the timeout is
+ * generous.
  *
  * The jobs carry an actor because `ctx.db` runs an invocation with one as
  * `authenticated` and one without as `anonymous` — the role decides which
@@ -27,32 +28,29 @@ import { IMAGE, methods, TASK } from '../handlers';
  */
 const featureDir = path.resolve(__dirname, '..');
 
+const IMAGE = 'features/____name____';
+const TASK = '____name____:____method____';
+
 const ACTOR = '00000000-0000-0000-0000-0000000000a1';
 
 let conn: FunctionsTestResult;
 // The worker claims jobs and pins a connection per dispatch, so it runs on the
 // harness-owned pool rather than the suite's transaction-bound client.
-// Typed off the harness rather than from `pg`: the runtime owns the postgres
-// client, and a feature reaches the database only through `ctx.db`.
 let pool: ReturnType<FunctionsTestResult['getPool']>;
 let image: RunningImage;
 let databaseId: string;
 
 beforeAll(async () => {
-  // No `featureDir` here: that option deploys a feature's own pgpm module, and
-  // a feature owns no schema — this suite's database is the platform's, cloned.
   conn = await getConnections();
   pool = conn.getPool();
   databaseId = await resolveDatabaseId(pool);
 
-  // The image is handed the suite's pool: a deployed container reads its
-  // connection from the environment, which here would name the template rather
-  // than the database this test owns. `featureDir` compiles the declared inputs
-  // out of this feature's own `handler.json`, so the payload a deployed image
-  // would refuse is refused here too.
-  image = await startFeatureImage({ name: IMAGE, methods, pool, featureDir });
+  // The image is given this suite's connection: a deployed container reads its
+  // own from the environment, which here would name the template rather than
+  // the database this test owns.
+  image = await startPythonImage({ name: IMAGE, featureDir, pool });
   await registerFeature(pool, databaseId, featureDir, { image: IMAGE });
-}, 120_000);
+}, 600_000);
 
 // A job that failed is left queued for its retry — that is the queue working.
 // Each test starts from an empty one so a deliberate failure here is not the job
@@ -62,8 +60,8 @@ afterEach(async () => {
 });
 
 afterAll(async () => {
-  await image.close();
-  await conn.teardown();
+  await image?.close();
+  await conn?.teardown();
 });
 
 describe('____name____:____method____ through the platform', () => {
