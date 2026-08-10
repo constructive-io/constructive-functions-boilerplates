@@ -7,28 +7,36 @@ The templates `fun init` scaffolds from: a **feature** in
 
 ```bash
 fun init billing --surface gql            # a GraphQL/HTTP feature — no database
-fun init billing --surface sql            # a db-connected feature, owning its SQL
+fun init billing --surface sql            # a db-connected feature — statements, not schema
 fun init billing --surface sql --kind sync --route /billing/export
+fun init billing --surface sql --lang python   # the same feature, in python
 fun init report --type python             # a platform handler
 ```
 
 ## Structure
 
 ```
-typescript/            handler/
-├── gql/               ├── node-multi-method/
-└── sql/               └── python/
+typescript/            python/             handler/
+├── gql/               ├── gql/            ├── node-multi-method/
+└── sql/               └── sql/            └── python/
 ```
 
 Two axes, and nothing else: the **surface** is what the function is connected to,
-the **language** is what you write it in. Python features wait on the python
-runtime mirror (constructive-planning#1455, phase 0.3) — until it lands, a
-feature is TypeScript and `handler/python` is how python code ships.
+the **language** is what you write it in. The four cells are the same feature
+shape twice, each at home in its own language — `handler.json` beside a
+`package.json` for node, beside a `requirements.txt` for python — over one
+runtime, mirrored in both (`functions/runtime` and `functions/runtime-py` in
+constructive-db), never two implementations free to disagree. `handler/*` is the
+separate thing: a *platform* handler in constructive-db's own tree.
+
+A **page** is a node image (`type: "node-page"`), so `--kind page` is a node
+feature; a python feature that serves a browser route puts those methods in a
+node manifest nested beside its own.
 
 | surface | what it reaches | database |
 |---|---|---|
 | `gql` | the tenant's API through `ctx.client`, its buckets, secrets and models | **none** — `ctx.db` is not on the context type |
-| `sql` | the same, plus a transaction through `ctx.db(fn)` | yes |
+| `sql` | the same, plus a transaction through `ctx.db(fn)` (`await ctx.db(fn)` in python) | yes |
 
 `ctx.db(fn)` runs the callback in one transaction that has assumed a
 low-privilege role and stamped the invocation's identity claims, so the tenant's
@@ -125,9 +133,29 @@ a container can touch, every route can. `methods[]` carries what makes a functio
 a *different* function — its task, its typed `inputs`/`outputs`/`props`.
 
 Dependencies are **not** in `handler.json`. A node feature declares them in the
-`package.json` beside it and a python handler in its `requirements.txt`, because
-those are the files node and pip actually read; image and system packages belong
-to the Dockerfile.
+`package.json` beside it and a python feature in its
+`handlers/requirements.txt`, because those are the files node and pip actually
+read; image and system packages belong to the Dockerfile.
+
+## What a python feature looks like
+
+The same four files, in python's shape. The image is `constructive_runtime` plus
+a FastAPI entry point that imports `handlers/handler.py` and serves every public
+coroutine in it as `POST /<name>` — so a method is an `async def`, discovered
+rather than registered, and `handlers/index.ts` has no python counterpart:
+
+```python
+async def export(params: Params, ctx: SqlContext) -> Result:
+    async def read(db: DbSession):
+        return await db.fetch("SELECT …")
+
+    return {"rows": await ctx.db(read)}
+```
+
+Its suite is TypeScript, because the platform it drives is: it registers the
+feature from `handler.json`, stages and starts the real python image
+(`startPythonImage`), and invokes it through the real queue. The first run builds
+the image's venv under `.image/`; later runs reuse it.
 
 ## Verifying a template
 

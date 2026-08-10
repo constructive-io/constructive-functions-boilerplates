@@ -1,0 +1,32 @@
+{
+  "name": "____name____",
+  "version": "____version____",
+  "description": "____description____",
+  "type": "python",
+  "port": 8080,
+  "scope": "platform",
+  "image": "features/____name____",
+  "runtime": "http",
+  "accessChannels": [],
+  "requires": {
+    "buckets": [],
+    "modules": [],
+    "models": [],
+    "secrets": [],
+    "configs": []
+  },
+  "methods": [
+    {
+      "taskIdentifier": "____name____:____method____",
+      "description": "____description____",
+      "icon": "code",
+      "category": "____name____",
+      "inputs": [
+        { "name": "subject", "type": "string", "description": "What the call is about" }
+      ],
+      "outputs": [
+        { "name": "ok", "type": "boolean", "description": "Whether the call succeeded" }
+      ]
+    }
+  ]
+}

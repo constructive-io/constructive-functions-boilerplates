@@ -19,7 +19,10 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /** Feature templates: a feature's image is its own path under `features/`. */
-const FEATURE_TEMPLATES = ['typescript/gql', 'typescript/sql'];
+const FEATURE_TEMPLATES = ['typescript/gql', 'typescript/sql', 'python/gql', 'python/sql'];
+
+/** The image `type` each language's feature template declares. */
+const FEATURE_IMAGE_TYPE = { typescript: 'node-multi-method', python: 'python' };
 
 /** Platform handler templates, which keep constructive-db's `fn-<name>` form. */
 const HANDLER_TEMPLATES = ['handler/node-multi-method', 'handler/python'];
@@ -122,6 +125,66 @@ for (const dir of FEATURE_TEMPLATES) {
       problems.push(`${path.relative(root, index)}: IMAGE disagrees with the manifest's image`);
     }
   }
+
+  const [lang, surface] = dir.split('/');
+
+  // The image the platform builds for this template is chosen by `type`, so a
+  // python template declaring node's would be staged, built and served as node.
+  if (manifest.type !== FEATURE_IMAGE_TYPE[lang]) {
+    problems.push(
+      `${rel}: type is ${JSON.stringify(manifest.type)}, expected ` +
+        `${JSON.stringify(FEATURE_IMAGE_TYPE[lang])} for a ${lang} feature — that field ` +
+        'chooses the template the image is generated from'
+    );
+  }
+
+  // A python image imports `handler.py` and discovers its methods from it, and
+  // installs `handlers/requirements.txt` — pip's file, in pip's shape.
+  if (lang === 'python') {
+    for (const required of ['handlers/handler.py', 'handlers/requirements.txt']) {
+      if (!fs.existsSync(path.join(root, dir, required))) {
+        problems.push(`${dir}: no ${required} — a python image cannot start without it`);
+      }
+    }
+    const handler = path.join(root, dir, 'handlers', 'handler.py');
+    if (fs.existsSync(handler)) {
+      const source = fs.readFileSync(handler, 'utf-8');
+      if (!new RegExp(`^async def ${METHOD}\\(`, 'm').test(source)) {
+        problems.push(
+          `${dir}/handlers/handler.py: no \`async def ${METHOD}(\` — the image serves the ` +
+            'module\'s public coroutines, so the declared method must be one of them'
+        );
+      }
+    }
+  }
+
+  // The surface is the whole difference between the two templates: gql has no
+  // database, and a scaffold that reached for one would teach the opposite.
+  // A *call*, not a mention: both templates explain the surface in prose, and
+  // the gql one earns its explanation by naming what it does not have.
+  const handlerSources = handlerFiles(path.join(root, dir, 'handlers'));
+  const usesDb = handlerSources.some(({ source }) => /(?:await )?ctx\.db\(/.test(source));
+  if (surface === 'gql' && usesDb) {
+    problems.push(
+      `${dir}: a gql feature has no database — it reaches the tenant through its ` +
+        'API, and a scaffold using `ctx.db` is the sql surface (`--surface sql`)'
+    );
+  }
+  if (surface === 'sql' && !usesDb) {
+    problems.push(
+      `${dir}: the sql surface is the one with a database, and nothing here uses ` +
+        '`ctx.db` — the scaffold would be a gql feature with a longer name'
+    );
+  }
+}
+
+/** A template's handler sources: what the author reads and copies. */
+function handlerFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((entry) => entry.endsWith('.ts') || entry.endsWith('.py'))
+    .map((entry) => ({ entry, source: fs.readFileSync(path.join(dir, entry), 'utf-8') }));
 }
 
 for (const dir of HANDLER_TEMPLATES) {

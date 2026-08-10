@@ -1,0 +1,4 @@
+# The staged python image and its venv: rebuilt from the template, the runtime
+# and this feature's requirements whenever any of them change.
+.image/
+__pycache__/
