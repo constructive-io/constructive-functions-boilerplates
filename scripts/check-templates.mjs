@@ -60,6 +60,12 @@ function methodsOf(manifest) {
 }
 
 function checkMethods(rel, manifest) {
+  // The scope is the registration's (`fun register --scope`), never the
+  // manifest's: constructive-db refuses to read a manifest that states one, so
+  // a template carrying it scaffolds a function that cannot be registered.
+  if ('scope' in manifest) {
+    problems.push(`${rel}: states a "scope" — registration rejects a manifest that names one`);
+  }
   const methods = methodsOf(manifest);
   if (methods.length === 0) {
     problems.push(`${rel}: declares no method, so it serves nothing`);
