@@ -14,15 +14,17 @@ identity and the capabilities it may reach.
 from datetime import datetime, timezone
 
 
-async def ____method____(payload: dict, agent=None) -> dict:
+async def ____method____(payload: dict, ctx) -> dict:
     """____description____
 
     A payload arrives as untyped JSON, so validate it here and raise on anything
     else: a malformed payload is the caller's bug, and raising is how this
     function reports failure — the platform records it and retries.
 
-    `agent` is the inference context, when this handler declares a model:
-        result = await agent.inference(
+    `ctx` is the runtime context (`ctx.db`, `ctx.storage`, `ctx.secrets`,
+    `ctx.config`, `ctx.log`); `ctx.agent` is the inference context, when this
+    handler declares a model:
+        result = await ctx.agent.inference(
             messages=[{"role": "user", "content": "Hello"}],
             model="gpt-4o",
         )
