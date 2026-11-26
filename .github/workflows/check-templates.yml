@@ -12,6 +12,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       # Node builtins only: this repository holds templates, not a package.
       - run: node scripts/check-templates.mjs
